@@ -1,0 +1,138 @@
+\documentclass[preprint,10pt,5p]{elsarticle}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{url}
+\usepackage{microtype}
+\emergencystretch=3em
+\journal{Universidade Católica Dom Bosco}
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black}
+
+% Insira aqui um endereco publico real, caso publique os graficos.
+% \newcommand{\linkgraficos}{https://SEU-LINK-AQUI}
+\newcommand{\imagemsegura}[2]{%
+\IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}{\fbox{\parbox[c][3cm][c]{0.85\linewidth}{\centering Imagem pendente: \texttt{\detokenize{#1}}}}}%
+}
+
+\begin{document}
+\begin{frontmatter}
+\title{Análise Histórica de Indicadores da Educação Pública em Mato Grosso do Sul: Relato de Experiência com PostgreSQL e Streamlit}
+\author[ucdb]{Luis Felipe Andrade}
+\ead{luis.silva170103@gmail.com}
+\address[ucdb]{Universidade Católica Dom Bosco, Campo Grande, Mato Grosso do Sul, Brasil}
+\begin{abstract}
+Este artigo apresenta um relato de experiência sobre a organização e a visualização de indicadores da educação pública de Mato Grosso do Sul, com base em um projeto acadêmico desenvolvido anteriormente. A solução documentada empregou arquivos CSV, armazenamento relacional em PostgreSQL, processamento em Python e visualizações interativas construídas com Streamlit e Plotly. O estudo descreve o fluxo de integração das tecnologias e analisa cinco registros visuais preservados: uma consulta ao banco de dados, a evolução das matrículas entre pontos disponíveis de 2019 a 2026, uma comparação entre Campo Grande e Dourados e dois rankings municipais de aprovação. Para 2019, a interface registrou taxas de aprovação de 64,27\% em Campo Grande e 65,90\% em Dourados, apesar de Campo Grande apresentar maior volume de matrículas. O relato evidencia a utilidade de indicadores absolutos e relativos para exploração de dados educacionais, mas reconhece limitações de cobertura temporal, rastreabilidade das fontes e validação independente dos cálculos. As capturas documentam o protótipo anterior, sem comprovar uma nova execução neste semestre.
+\end{abstract}
+\begin{keyword}
+Educação básica \sep Bancos de dados relacionais \sep Dashboards \sep Indicadores educacionais \sep Visualização interativa
+\end{keyword}
+\end{frontmatter}
+
+\section{Introdução}
+O acompanhamento da educação básica exige informações consistentes sobre matrículas, escolas, municípios e rendimento escolar. No Brasil, o Censo Escolar, coordenado pelo Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira (Inep), constitui uma referência para a produção de estatísticas e indicadores destinados à gestão e à pesquisa educacional \citep{inep_censo}. A disponibilização de bases e painéis públicos amplia as possibilidades de análise territorial e temporal \citep{inep_paineis}.
+
+A pandemia de COVID-19 trouxe interrupções ao funcionamento presencial das escolas e dificuldades para a continuidade do ensino, como documentado pela UNESCO \citep{unesco_pandemia}. Nesse contexto, observar séries históricas é relevante, mas diferenças entre anos não permitem, por si só, identificar causas: é preciso examinar a cobertura, os conceitos dos indicadores e a comparabilidade dos registros.
+
+Este trabalho documenta uma experiência acadêmica anterior voltada à integração de arquivos CSV, banco de dados PostgreSQL e uma interface analítica em Python. A contribuição principal é sistematizar o fluxo técnico, descrever as funcionalidades evidenciadas nas capturas preservadas e discutir os limites das inferências possíveis. O texto apresenta o contexto de trabalhos relacionados, a metodologia, os resultados visuais, a discussão e as conclusões.
+
+\section{Trabalhos Relacionados e Contextualização}
+O Inep disponibiliza microdados e sinopses estatísticas da educação básica, oferecendo referências oficiais para análises por período e localidade \citep{inep_microdados,inep_sinopses}. Seus painéis de estatísticas permitem explorar informações segundo diferentes recortes territoriais e características da rede de ensino \citep{inep_paineis}. Esses recursos mostram a relevância de transformar registros administrativos em informações acessíveis para consulta.
+
+Em termos computacionais, bancos relacionais permitem estruturar dados em tabelas e recuperá-los por consultas, enquanto painéis interativos oferecem filtros e representações gráficas para facilitar a exploração. A experiência aqui descrita combina essas duas etapas: PostgreSQL para armazenamento e consulta e Python, Streamlit e Plotly para apresentação visual. Diferentemente de uma pesquisa causal sobre os efeitos da pandemia, o objetivo é documentar uma aplicação de integração e visualização, apoiada nas evidências que permaneceram disponíveis.
+
+\section{Materiais e Métodos}
+\subsection{Natureza do relato e dados utilizados}
+Trata-se de um relato descritivo e retrospectivo de um projeto acadêmico anterior. Foram utilizados arquivos em formato CSV com campos referentes a ano, município, escola, matrículas e resultados escolares. O recorte mostrado na interface inclui anos entre 2019 e 2026, mas não há evidência visual de valores para todos os anos intermediários. Não se afirma, portanto, que a série recuperada seja completa nem que corresponda integralmente às bases oficiais citadas como contextualização.
+
+A preparação dos arquivos buscou compatibilizar a organização dos registros com sua importação ao banco relacional. Entretanto, os materiais preservados não permitem reconstituir com precisão cada regra de tratamento, eventuais exclusões de linhas ou procedimentos de verificação de duplicidades. Essas etapas são descritas somente no nível confirmado pelo histórico do projeto.
+
+\subsection{Armazenamento e consulta no PostgreSQL}
+Após a organização, os registros foram importados para o PostgreSQL. A consulta ilustrada na Figura~\ref{fig:banco} utiliza a tabela \texttt{public.indicadores\_educacao} e mostra campos como identificador, ano, município e escola. A estrutura relacional possibilitou reunir informações por diferentes recortes, necessários às análises exibidas no painel.
+
+\begin{figure}[!htbp]
+\centering
+\imagemsegura{postgree.png}{0.98}
+\caption{Consulta à tabela de indicadores educacionais no PostgreSQL, registrada no projeto anterior. Fonte: captura de tela do projeto acadêmico.}
+\label{fig:banco}
+\end{figure}
+
+\subsection{Integração com Python e visualização}
+O fluxo técnico documentado seguiu a sequência \textbf{CSV $\rightarrow$ PostgreSQL $\rightarrow$ Python $\rightarrow$ Streamlit/Plotly}. O Python foi utilizado na recuperação e no processamento dos dados para a interface; o Streamlit organizou os controles de interação e o Plotly apresentou as visualizações. As capturas demonstram seleção por ano e modos de análise individual, comparação e rankings.
+
+A comparação de aprovação é apresentada como indicador percentual exibido pelo sistema. A relação geral entre aprovados e matrículas pode ser expressa por:
+\begin{equation}
+T = \frac{A}{M}\times 100,
+\end{equation}
+na qual $A$ representa o número de aprovados e $M$ o número de matrículas considerado. Essa expressão descreve a razão aparente nos registros disponíveis; não substitui a definição metodológica oficial de taxas de rendimento escolar, que pode depender de critérios e denominadores específicos.
+
+\subsection{Procedimento de análise e limitações}
+Foram examinados cinco registros visuais preservados, um do banco e quatro do dashboard. A análise concentrou-se nas funcionalidades observáveis e nos números legíveis das capturas, sem executar novamente a aplicação. Não foram conduzidos testes estatísticos de causalidade, auditoria de dados nem avaliação formal de desempenho. A ausência de documentação completa de orientação a objetos e estruturas de dados impede atribuir ao projeto implementações específicas dessas técnicas.
+
+\section{Resultados}
+\subsection{Evolução histórica das matrículas}
+A Figura~\ref{fig:evolucao} mostra pontos da evolução das matrículas na interface entre 2019 e 2026. Há redução expressiva entre 2019 e 2020, relativa estabilidade nos pontos de 2021 e 2022 e valor inferior no ponto apresentado para 2026. Como a captura não contém observações para todos os anos, não é possível caracterizar a trajetória completa do intervalo ou atribuir suas oscilações exclusivamente à pandemia.
+
+\begin{figure}[!htbp]
+\centering
+\imagemsegura{grafico1.png}{0.98}
+\caption{Evolução histórica das matrículas conforme os pontos apresentados pelo dashboard anterior. Fonte: captura de tela do projeto acadêmico.}
+\label{fig:evolucao}
+\end{figure}
+
+\subsection{Comparação entre Campo Grande e Dourados}
+A Figura~\ref{fig:comparacao} apresenta, com filtro em 2019, 70.087 matrículas e 45.045 aprovados em Campo Grande, correspondentes à taxa exibida de 64,27\%. Para Dourados, constam 24.396 matrículas, 16.077 aprovados e taxa de 65,90\%. Embora Campo Grande tenha maior número absoluto de matrículas e aprovações, Dourados apresenta percentual ligeiramente superior na interface, com diferença de 1,63 ponto percentual. Isso evidencia por que volumes e proporções devem ser interpretados separadamente.
+
+\begin{figure}[!htbp]
+\centering
+\imagemsegura{grafico2.png}{0.98}
+\caption{Comparação entre Campo Grande e Dourados em 2019: matrículas, aprovados e taxas apresentadas no painel. Fonte: captura de tela do projeto acadêmico.}
+\label{fig:comparacao}
+\end{figure}
+
+\subsection{Rankings municipais de aprovação}
+As Figuras~\ref{fig:maiores} e~\ref{fig:menores} apresentam, respectivamente, municípios com maiores e menores taxas de aprovação, sob o filtro de 2019. Os rankings ilustram a capacidade do dashboard de ordenar localidades a partir de um indicador, facilitando a identificação de contrastes territoriais. Não obstante, classificações percentuais devem ser acompanhadas da quantidade de registros e da definição do indicador para evitar interpretações descontextualizadas.
+
+\begin{figure}[!htbp]
+\centering
+\imagemsegura{grafico3.png}{0.98}
+\caption{Ranking dos municípios com maiores taxas de aprovação no filtro de 2019. Fonte: captura de tela do projeto acadêmico.}
+\label{fig:maiores}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\imagemsegura{grafico4.png}{0.98}
+\caption{Ranking dos municípios com menores taxas de aprovação no filtro de 2019. Fonte: captura de tela do projeto acadêmico.}
+\label{fig:menores}
+\end{figure}
+
+% Para inserir um link publico valido, defina \linkgraficos no preambulo e ative a linha abaixo.
+% \noindent\textbf{Material visual complementar:} \href{\linkgraficos}{acessar os registros do projeto}.\par
+
+\section{Discussão}
+A principal contribuição técnica documentada foi a articulação entre armazenamento relacional e interface analítica. O uso de PostgreSQL permitiu organizar os registros, enquanto Streamlit e Plotly ofereceram mecanismos para alternar entre uma visão temporal, comparações locais e rankings. Esse fluxo é compatível com a finalidade de exploração de dados educacionais presente em iniciativas oficiais de disponibilização de estatísticas \citep{inep_paineis}.
+
+Os resultados também mostram a importância de distinguir indicadores absolutos e relativos. Em 2019, Campo Grande apresenta mais matrículas do que Dourados, mas a taxa de aprovação exibida é inferior. A diferença, isoladamente, não demonstra melhor qualidade de ensino em uma localidade, pois fatores como composição das escolas, etapas atendidas e critérios de cálculo não foram controlados.
+
+A leitura da série temporal deve ser igualmente cautelosa. A UNESCO documenta impactos globais da interrupção das atividades escolares durante a pandemia \citep{unesco_pandemia}, mas esse contexto não basta para explicar quantitativamente cada oscilação observada em Mato Grosso do Sul. A série apresentada é incompleta, e não foram realizadas análises de controle ou testes capazes de sustentar atribuições causais.
+
+Há limitações adicionais: o código-fonte completo não foi recuperado para nova execução; não foi possível auditar integralmente a procedência e o tratamento dos dados utilizados nas capturas; e o material disponível não documenta a implementação de classes de orientação a objetos ou estruturas de dados específicas. Portanto, as figuras comprovam a existência de registros visuais do protótipo anterior, mas não substituem a entrega de um protótipo atualmente executável. Essas limitações devem ser consideradas na avaliação do alcance do relato.
+
+\section{Conclusão}
+Este relato sistematizou uma experiência de integração de CSV, PostgreSQL, Python, Streamlit e Plotly aplicada à visualização de indicadores educacionais de Mato Grosso do Sul. Os registros preservados ilustram consultas estruturadas, evolução de matrículas, comparação entre municípios e rankings de aprovação. O caso de Campo Grande e Dourados evidencia o valor de combinar números absolutos e taxas percentuais na interpretação de resultados.
+
+Como contribuição acadêmica, o trabalho explicita o fluxo de desenvolvimento e apresenta criticamente o que pode ser inferido a partir do material disponível. Para trabalhos futuros, recomenda-se preservar código-fonte e bases originais, documentar as regras de preparação e os denominadores dos indicadores, verificar a cobertura temporal e realizar validações com fontes oficiais. Somente após essas etapas seria adequado aprofundar hipóteses sobre os efeitos da pandemia na educação pública estadual.
+
+\begin{thebibliography}{00}
+\bibitem[Inep(2026a)]{inep_censo} INEP. \textit{Censo Escolar: apresentação}. Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira. Disponível em: \url{https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/censo-escolar}. Acesso em: 30 out. 2026.
+\bibitem[Inep(2026b)]{inep_microdados} INEP. \textit{Microdados do Censo Escolar da Educação Básica}. Disponível em: \url{https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-escolar}. Acesso em: 30 out. 2026.
+\bibitem[Inep(2026c)]{inep_sinopses} INEP. \textit{Sinopses Estatísticas da Educação Básica}. Disponível em: \url{https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/sinopses-estatisticas/educacao-basica}. Acesso em: 30 out. 2026.
+\bibitem[Inep(2026d)]{inep_paineis} INEP. \textit{Estatísticas Censo Escolar: painéis de informação}. Disponível em: \url{https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/estatisticas-censo-escolar}. Acesso em: 30 out. 2026.
+\bibitem[UNESCO(s.d.)]{unesco_pandemia} UNESCO. \textit{Education: From COVID-19 school closures to recovery}. Disponível em: \url{https://www.unesco.org/en/covid-19/education-response}. Acesso em: 30 out. 2026.
+\end{thebibliography}
+\end{document}
